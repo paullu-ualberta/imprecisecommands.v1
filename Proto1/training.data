@@ -1,0 +1,69 @@
+# Training Data for Imprecise Commands.  Batch 1.
+#
+# This copyright header adapted from the Linux 4.1 kernel.
+#
+# Copyright 2017 Paul Lu
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#      
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+call-for-help:
+	i am not feeling well
+	call for help
+	help me
+	get my son
+	get my daughter
+	get my wife
+	get my husband
+	i'm feeling really bad
+	i'm stuck
+	call 911
+	i feel dizzy
+	i need to lie down
+	i do not feel well
+	i need help
+
+activate:
+	turn on lights
+	turn on lamp
+	i want to listen to the radio
+	what time is it
+
+explicit-warning:
+	so so
+	i feel so so
+	i feel a little off
+	i have a headache
+	just a bit tired
+	my feet hurt
+	i feel dizzy
+	leave me alone
+	stop bothering to me
+	my knees hurt
+	my phone is broken
+	go away
+
+do-nothing:
+	i am fine
+	not so bad
+	all is fine
+	how are you
+	can't get this to work
+	ouch
+	hello
+	i do not need help
+
+ngrams#
+	i am
+	get my
