@@ -121,6 +121,9 @@ for line in f:
     l = line.strip()
     if len(l) <= 0:	# Skip blank lines
         continue
+    if l[0] == "#":	# Skip comment lines
+        print(l)
+        continue
 
     # Get labels
     if l[-1] == ":":	# Look for new classes/labels
