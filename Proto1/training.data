@@ -53,6 +53,7 @@ explicit-warning:
 	my knees hurt
 	my phone is broken
 	go away
+	my body hurts
 
 do-nothing:
 	i am fine
@@ -60,10 +61,11 @@ do-nothing:
 	not so bad
 	all is fine
 	how are you
-	can't get this to work
+	cannot get this to work
 	ouch
 	hello
 	i do not need help
+	no worries
 
 ngrams#
 	i am

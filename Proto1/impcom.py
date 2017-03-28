@@ -32,6 +32,7 @@ from nltk.probability import DictionaryProbDist
 # TODO:  Should use command-line arguments too
 verbose = False
 singleSentenceTest = True
+max_print_comment_lines = 2
 
 # Training vs. testing:  Value between 0.0 and 1.0
 fold_split_percent = 0.8
@@ -91,7 +92,7 @@ def classify_tuple_with_debug( inWords ):
     dist = classifier.prob_classify( inFeatures )
     predClass = dist.max()
 #
-    dString = "(" + str(len(inWords)) + ") "
+    dString = "(len InWords: " + str(len(inWords)) + ") "
     dString += dict_to_string( features_in_string(inWords) ) + " -- Prob: "
     for label in dist.samples():
         dString += "%s: %f " % (label, dist.prob(label))
@@ -116,13 +117,16 @@ def classify_tuple_with_debug( inWords ):
 # ********************************************************
 
 # TODO:  Should use command-line argument; should catch exceptions
+comment_lines = 0
 f = open("training.data", "r")
 for line in f:
     l = line.strip()
     if len(l) <= 0:	# Skip blank lines
         continue
     if l[0] == "#":	# Skip comment lines
-        print(l)
+        if comment_lines < max_print_comment_lines:
+            print(l)
+        comment_lines += 1
         continue
 
     # Get labels
@@ -146,6 +150,7 @@ for line in f:
         fullsentence.append( (l, current_class) )
 f.close()
 
+print( "Comment lines: ", comment_lines )
 print( "Ngrams: ", ngrams )
 
 training_data = fulltraining
