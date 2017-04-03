@@ -23,6 +23,7 @@ call-for-help:
 	call for help
 	help me
 	get my son
+	get my boy
 	get my daughter
 	get my wife
 	get my husband
@@ -69,4 +70,5 @@ do-nothing:
 
 ngrams#
 	i am
+	i am not
 	get my
