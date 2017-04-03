@@ -115,6 +115,7 @@ def classify_tuple_with_debug( inWords, word_features_all ):
     return( predClass, dString )
 
 
+
 def one_fold_classify(param_training_data):
     all_words = []
 
@@ -220,9 +221,16 @@ if verbose:
 
 min_a = 101
 max_a = -1
-for folds in range(0, 20):
+sum_a = 0
+numFolds = 20
+for folds in range(0, numFolds):
     random.shuffle(training_data)
     Word_features_all, Featuresets, fold_accuracy = one_fold_classify(training_data)
+    min_a = min( min_a, fold_accuracy )
+    max_a = max( max_a, fold_accuracy )
+    sum_a += fold_accuracy
+
+print( "%d folds:  Accuracy Range ( %f, %f ), Average Accuracy %f " % ( numFolds, min_a, max_a, ( sum_a / numFolds ) ) )
 
 
 ## TODO:  Should reset/redo Word_features_all, etc. for all training data
