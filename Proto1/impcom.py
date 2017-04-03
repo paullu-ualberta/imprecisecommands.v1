@@ -47,7 +47,7 @@ fullsentence = []
 
 # ********************************************************
 # Only find features that are True
-def true_features(features_string_document):
+def true_features(features_string_document, word_features_all):
     wordsInThisString = set(features_string_document)
     features = {}
     for w in wordsInThisString:	# Only True features
@@ -57,7 +57,7 @@ def true_features(features_string_document):
 
 
 # Only find features that are in the string being classified
-def features_in_string(features_string_document):
+def features_in_string(features_string_document, word_features_all):
     wordsInThisString = set(features_string_document)
     features = {}
     for w in wordsInThisString:	# Only look at features in use, either T or F
@@ -66,7 +66,7 @@ def features_in_string(features_string_document):
 
 
 # Answer T/F for all possible features from the training data
-def find_features(features_string_document):
+def find_features(features_string_document, word_features_all):
     wordsInThisString = set(features_string_document)
     features = {}
     for w in word_features_all:	# Record True/False for all possible features
@@ -84,35 +84,94 @@ def dict_to_string_nl( d ):
     s= ''.join('\'{}\':{}\n'.format(key, val) for key, val in d.items())
     return( s )
 
-def classify_tuple_with_debug( inWords ):
+def classify_tuple_with_debug( inWords, word_features_all ):
     print( "InWords: ", inWords )
 
-    inFeatures = find_features( inWords )
+    inFeatures = find_features( inWords, word_features_all )
     # print( "inFeatures:", len(inFeatures), dict_to_string( inFeatures ) )
     dist = classifier.prob_classify( inFeatures )
     predClass = dist.max()
 #
     dString = "(len InWords: " + str(len(inWords)) + ") "
-    dString += dict_to_string( features_in_string(inWords) ) + " -- Prob: "
+    dString += dict_to_string( features_in_string(inWords, word_features_all) ) + " -- Prob: "
     for label in dist.samples():
         dString += "%s: %f " % (label, dist.prob(label))
 
-    print( "True Features: ", dict_to_string( true_features(inFeatures) ) )
+    print( "True Features: ", dict_to_string( true_features(inFeatures, word_features_all) ) )
 
     # Classify using just a single, True feature.
     # Towards building stacked bar graph
-    for w,v in true_features( inFeatures ).items():
+    for w,v in true_features( inFeatures, word_features_all ).items():
         # single_f = find_features_with_debug( [w], w )
-        single_f = find_features( [w] )
+        single_f = find_features( [w], word_features_all )
         dist_f = classifier.prob_classify( single_f )
 
-        fString = "%s -|-> (%s) " % (w, dict_to_string( true_features( single_f ) ) )
+        fString = "%s -|-> (%s) " % (w, dict_to_string( true_features( single_f, word_features_all ) ) )
         fString += dist_f.max() + " : "
         for label in dist_f.samples():
             fString += "%s: %f " % (label, dist_f.prob(label))
         print( fString )
 
     return( predClass, dString )
+
+
+def one_fold_classify(param_training_data):
+    all_words = []
+
+    for ws,c in param_training_data:
+        for w in ws:
+            all_words.append(w.lower())
+    
+    all_words = nltk.FreqDist(all_words)
+    if verbose and len(all_words) < 50:
+        print(  "All words: ", all_words )
+
+
+    # All features words, used for classifier
+    word_features_all = list(all_words.keys())[:num_features]
+    if( num_features < len( list(all_words.keys()) ) ):
+        print(  "*** Warning:  Only a subset of words used as features" )
+
+    
+    featuresets = [(find_features(rev, word_features_all), category) for (rev, category) in param_training_data]
+    if verbose and len(featuresets) < 50:
+        print(  "Feature Sets: ", featuresets )
+
+
+    # Use fraction fold_split_percent to train, and rest to test
+    fold_split =  int( round( len(featuresets) * fold_split_percent ) )
+
+    # set that we'll train our classifier with
+    training_set = featuresets[:fold_split]
+    print( "Training Set Length: " + str(len(training_set)) + " of " + str( len(param_training_data)) )
+
+    if verbose and fold_split < 5:
+        print(  "Training Set Itself: ", training_set )
+
+    # set that we'll test against.
+    testing_set = featuresets[fold_split:]
+    print( "Testing Set Length: " + str(len(testing_set)) + " of " + str( len(param_training_data)) )
+    if verbose and len(testing_set) < 10:
+        print(  "Testing Set Itself: ", testing_set )
+    
+    # Training/Testing set split
+    classifier = nltk.NaiveBayesClassifier.train(training_set)
+
+    if verbose:
+        print( dict_to_string_nl( classifier._feature_probdist ) )
+
+    # Repeat this info, from above
+    print( "Training Set Length: " + str(len(training_set)) + " of " + str( len(param_training_data)) )
+    print( "Testing Set Length: " + str(len(testing_set)) + " of " + str( len(param_training_data)) )
+    fold_accuracy = (nltk.classify.accuracy(classifier, testing_set))*100
+    print("Classifier accuracy percent (training/testing):", fold_accuracy)
+
+    classifier.show_most_informative_features(15)
+
+    return( word_features_all, featuresets, fold_accuracy )
+# end def
+
+
 
 # ********************************************************
 
@@ -159,70 +218,23 @@ if verbose:
 
 # sys.exit(0)
 
-random.shuffle(training_data)
-
-all_words = []
-
-for ws,c in training_data:
-    for w in ws:
-        all_words.append(w.lower())
-
-all_words = nltk.FreqDist(all_words)
-if verbose and len(all_words) < 50:
-    print(  "All words: ", all_words )
+min_a = 101
+max_a = -1
+for folds in range(0, 20):
+    random.shuffle(training_data)
+    Word_features_all, Featuresets, fold_accuracy = one_fold_classify(training_data)
 
 
-# All features words, used for classifier
-word_features_all = list(all_words.keys())[:num_features]
-if( num_features < len( list(all_words.keys()) ) ):
-    print(  "*** Warning:  Only a subset of words used as features" )
-
-
-    
-featuresets = [(find_features(rev), category) for (rev, category) in training_data]
-if verbose and len(featuresets) < 50:
-    print(  "Feature Sets: ", featuresets )
-
-
-# Use fraction fold_split_percent to train, and rest to test
-fold_split =  int( round( len(featuresets) * fold_split_percent ) )
-
-# set that we'll train our classifier with
-training_set = featuresets[:fold_split]
-print( "Training Set Length: " + str(len(training_set)) + " of " + str( len(training_data)) )
-
-if verbose and fold_split < 5:
-    print(  "Training Set Itself: ", training_set )
-
-# set that we'll test against.
-testing_set = featuresets[fold_split:]
-print( "Testing Set Length: " + str(len(testing_set)) + " of " + str( len(training_data)) )
-if verbose and len(testing_set) < 10:
-    print(  "Testing Set Itself: ", testing_set )
-
-# Training/Testing set split
-classifier = nltk.NaiveBayesClassifier.train(training_set)
-
-if verbose:
-    print( dict_to_string_nl( classifier._feature_probdist ) )
-
-# Repeat this info, from above
-print( "Training Set Length: " + str(len(training_set)) + " of " + str( len(training_data)) )
-print( "Testing Set Length: " + str(len(testing_set)) + " of " + str( len(training_data)) )
-print("Classifier accuracy percent (training/testing):",(nltk.classify.accuracy(classifier, testing_set))*100)
-
-classifier.show_most_informative_features(15)
-
-
-training_set = featuresets
-testing_set = featuresets
+## TODO:  Should reset/redo Word_features_all, etc. for all training data
+training_set = Featuresets
+testing_set = Featuresets
 classifier = nltk.NaiveBayesClassifier.train(training_set)
 print("Classifier accuracy percent (training==testing):",(nltk.classify.accuracy(classifier, testing_set))*100)
 
 classifier.show_most_informative_features(15)
 
  
-# print( word_features_all )
+# print( Word_features_all )
 
 
 # print ("************* (training==testing)) ***************" )
@@ -235,5 +247,5 @@ while contFlag:
         contFlag = False
     inWords = list( nltk.word_tokenize( inSentence ) )
     inWords.append( inSentence )
-    print( "FINAL Classify: ", classify_tuple_with_debug( inWords ) )
+    print( "FINAL Classify: ", classify_tuple_with_debug( inWords, Word_features_all ) )
 sys.exit( 0 )
